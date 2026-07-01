@@ -16,9 +16,11 @@ model RecurringMeeting {
   color        String   @default("blue")   // accent color
   emoji        String?
   participants String   @default("[]")     // JSON array of names
-  pinned       Boolean  @default(false)
-  archived     Boolean  @default(false)
-  nextDate     DateTime?
+  pinned         Boolean  @default(false)
+  archived       Boolean  @default(false)
+  nextDate       DateTime?
+  zoomLink       String?
+  zoomMeetingId  String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -76,6 +78,20 @@ model OpenQuestion {
   occurrence MeetingOccurrence @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
 
   @@map("open_questions")
+}
+
+model Integration {
+  id           String   @id @default(cuid())
+  provider     String   // "google" | "zoom"
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+  scope        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([provider])
+  @@map("integrations")
 }
 
 model Decision {

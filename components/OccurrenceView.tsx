@@ -16,6 +16,7 @@ import {
   RotateCcw,
   Calendar,
   User,
+  Video,
 } from "lucide-react";
 import { cn, formatDate, parseSummary, getColor } from "@/lib/utils";
 import type { MeetingOccurrence, RecurringMeeting, ActionItem, OpenQuestion, Decision } from "@/lib/types";
@@ -104,15 +105,24 @@ export function OccurrenceView({ occurrence, meeting, onUpdate }: OccurrenceView
           </h2>
         </div>
 
-        {occurrence.status !== "completed" && (
-          <button
-            onClick={markComplete}
-            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-400 rounded-lg transition-colors"
-          >
-            <Check className="w-4 h-4" />
-            Mark complete
-          </button>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {meeting.zoomMeetingId && (
+            <ImportZoomButton
+              occurrenceId={occurrence.id}
+              zoomMeetingId={meeting.zoomMeetingId}
+              onImported={onUpdate}
+            />
+          )}
+          {occurrence.status !== "completed" && (
+            <button
+              onClick={markComplete}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-400 rounded-lg transition-colors"
+            >
+              <Check className="w-4 h-4" />
+              Mark complete
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Summary */}
@@ -185,6 +195,51 @@ export function OccurrenceView({ occurrence, meeting, onUpdate }: OccurrenceView
       {/* Decisions */}
       <DecisionsSection occurrence={occurrence} onUpdate={onUpdate} />
     </div>
+  );
+}
+
+// ── Import from Zoom ─────────────────────────────────────────────────────────
+
+function ImportZoomButton({
+  occurrenceId,
+  zoomMeetingId,
+  onImported,
+}: {
+  occurrenceId: string;
+  zoomMeetingId: string;
+  onImported: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  async function importSummary() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/zoom/summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ occurrenceId, meetingId: zoomMeetingId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Failed to import from Zoom");
+        return;
+      }
+      toast.success(`Imported — ${data.summaryBullets} bullets, ${data.actionItems} action items`);
+      onImported();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <button
+      onClick={importSummary}
+      disabled={loading}
+      className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 text-blue-500 rounded-lg transition-colors disabled:opacity-50"
+    >
+      <Video className={cn("w-4 h-4", loading && "animate-pulse")} />
+      {loading ? "Importing…" : "Import from Zoom"}
+    </button>
   );
 }
 

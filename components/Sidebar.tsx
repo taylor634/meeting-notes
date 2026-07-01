@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LayoutDashboard, Search, Plus, Settings, Moon, Sun, Pin, MoreHorizontal, Pencil, Trash2, PinOff } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -102,9 +103,9 @@ export function Sidebar() {
           >
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-          <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+          <Link href="/settings" className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
             <Settings className="w-4 h-4" />
-          </button>
+          </Link>
         </div>
       </aside>
 

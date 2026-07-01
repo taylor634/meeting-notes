@@ -9,6 +9,8 @@ export interface RecurringMeeting {
   pinned: boolean;
   archived: boolean;
   nextDate: string | null;
+  zoomLink: string | null;
+  zoomMeetingId: string | null;
   createdAt: string;
   updatedAt: string;
   occurrences?: MeetingOccurrence[];
