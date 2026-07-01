@@ -6,20 +6,17 @@ import { use, useState, useEffect } from "react";
 import {
   Plus,
   ChevronLeft,
-  Clock,
   Users,
   Pin,
   PinOff,
-  MoreHorizontal,
+  Pencil,
   CheckSquare2,
-  HelpCircle,
-  Lightbulb,
-  ArrowUpRight,
 } from "lucide-react";
 import { cn, formatDate, formatShortDate, parseSummary, getColor, CADENCE_LABELS } from "@/lib/utils";
 import type { RecurringMeeting, MeetingOccurrence } from "@/lib/types";
 import { OccurrenceView } from "@/components/OccurrenceView";
 import { NewOccurrenceDialog } from "@/components/NewOccurrenceDialog";
+import { EditMeetingDialog } from "@/components/EditMeetingDialog";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
@@ -29,6 +26,7 @@ export default function MeetingPage({ params }: { params: Promise<{ id: string }
   const qc = useQueryClient();
   const router = useRouter();
   const [newOccurrenceOpen, setNewOccurrenceOpen] = useState(false);
+  const [editMeetingOpen, setEditMeetingOpen] = useState(false);
   const [selectedOccurrenceId, setSelectedOccurrenceId] = useState<string | null>(null);
 
   const { data: meeting, isLoading } = useQuery<RecurringMeeting>({
@@ -89,12 +87,21 @@ export default function MeetingPage({ params }: { params: Promise<{ id: string }
                 {CADENCE_LABELS[meeting.cadence]}
               </p>
             </div>
-            <button
-              onClick={togglePin}
-              className="p-1 rounded-md hover:bg-accent transition-colors text-muted-foreground/40 hover:text-muted-foreground shrink-0"
-            >
-              {meeting.pinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
-            </button>
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                onClick={() => setEditMeetingOpen(true)}
+                className="p-1 rounded-md hover:bg-accent transition-colors text-muted-foreground/40 hover:text-muted-foreground"
+                title="Edit meeting"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={togglePin}
+                className="p-1 rounded-md hover:bg-accent transition-colors text-muted-foreground/40 hover:text-muted-foreground"
+              >
+                {meeting.pinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
+              </button>
+            </div>
           </div>
 
           {participants.length > 0 && (
@@ -212,6 +219,13 @@ export default function MeetingPage({ params }: { params: Promise<{ id: string }
         )}
       </div>
 
+      {editMeetingOpen && (
+        <EditMeetingDialog
+          meeting={meeting}
+          open={editMeetingOpen}
+          onClose={() => setEditMeetingOpen(false)}
+        />
+      )}
       <NewOccurrenceDialog
         meetingId={id}
         open={newOccurrenceOpen}
