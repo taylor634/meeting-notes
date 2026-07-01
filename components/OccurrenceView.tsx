@@ -21,6 +21,7 @@ import {
 import { cn, formatDate, parseSummary, getColor } from "@/lib/utils";
 import type { MeetingOccurrence, RecurringMeeting, ActionItem, OpenQuestion, Decision } from "@/lib/types";
 import toast from "react-hot-toast";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 interface OccurrenceViewProps {
   occurrence: MeetingOccurrence;
@@ -66,6 +67,14 @@ export function OccurrenceView({ occurrence, meeting, onUpdate }: OccurrenceView
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ summary: items }),
     });
+    onUpdate();
+  }
+
+  const [confirmDeleteOccurrence, setConfirmDeleteOccurrence] = useState(false);
+
+  async function deleteOccurrence() {
+    await fetch(`/api/occurrences/${occurrence.id}`, { method: "DELETE" });
+    toast.success("Occurrence deleted");
     onUpdate();
   }
 
@@ -122,8 +131,24 @@ export function OccurrenceView({ occurrence, meeting, onUpdate }: OccurrenceView
               Mark complete
             </button>
           )}
+          <button
+            onClick={() => setConfirmDeleteOccurrence(true)}
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 border border-transparent hover:border-destructive/20 transition-colors"
+            title="Delete occurrence"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmDeleteOccurrence}
+        title="Delete this occurrence?"
+        description="This will permanently remove this occurrence and all its notes, action items, and questions."
+        confirmLabel="Delete occurrence"
+        onConfirm={deleteOccurrence}
+        onCancel={() => setConfirmDeleteOccurrence(false)}
+      />
 
       {/* Summary */}
       <SummarySection
