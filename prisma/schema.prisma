@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model RecurringMeeting {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  cadence      String   @default("weekly") // weekly, biweekly, monthly, adhoc
+  color        String   @default("blue")   // accent color
+  emoji        String?
+  participants String   @default("[]")     // JSON array of names
+  pinned       Boolean  @default(false)
+  archived     Boolean  @default(false)
+  nextDate     DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  occurrences MeetingOccurrence[]
+
+  @@map("recurring_meetings")
+}
+
+model MeetingOccurrence {
+  id        String   @id @default(cuid())
+  meetingId String
+  date      DateTime
+  title     String?  // optional override title
+  summary   String?  // short 2-5 bullet summary
+  notes     String   @default("") // full markdown notes
+  status    String   @default("draft") // draft, completed
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  meeting     RecurringMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  actionItems ActionItem[]
+  questions   OpenQuestion[]
+  decisions   Decision[]
+
+  @@map("meeting_occurrences")
+}
+
+model ActionItem {
+  id           String    @id @default(cuid())
+  occurrenceId String    // occurrence where it was created or rolled into
+  meetingId    String    // parent recurring meeting
+  text         String
+  owner        String?
+  dueDate      DateTime?
+  completed    Boolean   @default(false)
+  completedAt  DateTime?
+  rolledFromId String?   // id of the action item it was rolled from
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  occurrence MeetingOccurrence @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+
+  @@map("action_items")
+}
+
+model OpenQuestion {
+  id           String    @id @default(cuid())
+  occurrenceId String
+  text         String
+  resolved     Boolean   @default(false)
+  resolution   String?
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  occurrence MeetingOccurrence @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+
+  @@map("open_questions")
+}
+
+model Decision {
+  id           String   @id @default(cuid())
+  occurrenceId String
+  text         String
+  createdAt    DateTime @default(now())
+
+  occurrence MeetingOccurrence @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+
+  @@map("decisions")
+}
