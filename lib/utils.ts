@@ -8,9 +8,6 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatDate(date: Date | string): string {
   const d = new Date(date);
-  if (isToday(d)) return "Today";
-  if (isTomorrow(d)) return "Tomorrow";
-  if (isYesterday(d)) return "Yesterday";
   return format(d, "MMM d, yyyy");
 }
 
