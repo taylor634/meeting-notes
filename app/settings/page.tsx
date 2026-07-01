@@ -2,12 +2,20 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { CheckCircle2, AlertCircle, RefreshCw, Unlink, Calendar, Video, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 export default function SettingsPage() {
+  return (
+    <Suspense>
+      <SettingsContent />
+    </Suspense>
+  );
+}
+
+function SettingsContent() {
   const searchParams = useSearchParams();
   const qc = useQueryClient();
 
@@ -104,6 +112,7 @@ export default function SettingsPage() {
   );
 }
 
+// IntegrationCard
 function IntegrationCard({
   icon, title, description, connected, loading, onConnect, onDisconnect, actions = [],
 }: {
