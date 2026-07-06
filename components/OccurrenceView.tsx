@@ -454,6 +454,15 @@ function ActionItemsSection({
     onUpdate();
   }
 
+  async function saveItem(id: string, text: string, owner: string) {
+    await fetch(`/api/action-items/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, owner: owner || null }),
+    });
+    onUpdate();
+  }
+
   async function addItem() {
     if (!newText.trim()) return;
     await fetch("/api/action-items", {
@@ -514,6 +523,7 @@ function ActionItemsSection({
               item={item}
               onToggle={() => toggle(item)}
               onDelete={() => deleteItem(item.id)}
+              onSave={(text, owner) => saveItem(item.id, text, owner)}
             />
           ))}
 
@@ -529,6 +539,7 @@ function ActionItemsSection({
                   item={item}
                   onToggle={() => toggle(item)}
                   onDelete={() => deleteItem(item.id)}
+                  onSave={(text, owner) => saveItem(item.id, text, owner)}
                 />
               ))}
             </div>
@@ -584,11 +595,49 @@ function ActionItemRow({
   item,
   onToggle,
   onDelete,
+  onSave,
 }: {
   item: ActionItem;
   onToggle: () => void;
   onDelete: () => void;
+  onSave: (text: string, owner: string) => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(item.text);
+  const [editOwner, setEditOwner] = useState(item.owner ?? "");
+
+  function save() {
+    if (editText.trim()) onSave(editText.trim(), editOwner.trim());
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="flex gap-2 px-2 py-2 bg-muted/30 rounded-lg border border-border">
+        <div className="flex-1 space-y-1.5">
+          <input
+            autoFocus
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
+            className="w-full bg-transparent text-sm focus:outline-none"
+          />
+          <input
+            value={editOwner}
+            onChange={(e) => setEditOwner(e.target.value)}
+            placeholder="Owner (optional)"
+            onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
+            className="w-full bg-transparent text-xs text-muted-foreground focus:outline-none placeholder:text-muted-foreground/30"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <button onClick={save} className="px-2 py-1 bg-violet-500 hover:bg-violet-400 text-white text-xs rounded-md">Save</button>
+          <button onClick={() => setEditing(false)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-start gap-2.5 px-2 py-2 rounded-lg hover:bg-accent/50 group transition-colors">
       <button
@@ -598,43 +647,21 @@ function ActionItemRow({
           item.completed ? "text-emerald-400" : "text-muted-foreground/30 hover:text-muted-foreground"
         )}
       >
-        {item.completed ? (
-          <CheckSquare2 className="w-4 h-4" />
-        ) : (
-          <Square className="w-4 h-4" />
-        )}
+        {item.completed ? <CheckSquare2 className="w-4 h-4" /> : <Square className="w-4 h-4" />}
       </button>
-      <div className="flex-1 min-w-0">
-        <p
-          className={cn(
-            "text-sm",
-            item.completed && "line-through text-muted-foreground/50"
-          )}
-        >
-          {item.text}
-        </p>
+      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setEditing(true)}>
+        <p className={cn("text-sm", item.completed && "line-through text-muted-foreground/50")}>{item.text}</p>
         <div className="flex items-center gap-3 mt-0.5">
           {item.owner && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground/50">
-              <User className="w-3 h-3" />
-              {item.owner}
-            </span>
+            <span className="flex items-center gap-1 text-xs text-muted-foreground/50"><User className="w-3 h-3" />{item.owner}</span>
           )}
           {item.dueDate && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground/50">
-              <Calendar className="w-3 h-3" />
-              {formatDate(item.dueDate)}
-            </span>
+            <span className="flex items-center gap-1 text-xs text-muted-foreground/50"><Calendar className="w-3 h-3" />{formatDate(item.dueDate)}</span>
           )}
-          {item.rolledFromId && (
-            <span className="text-xs text-amber-400/60 font-medium">↑ carried forward</span>
-          )}
+          {item.rolledFromId && <span className="text-xs text-amber-400/60 font-medium">↑ carried forward</span>}
         </div>
       </div>
-      <button
-        onClick={onDelete}
-        className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground/30 hover:text-destructive transition-all rounded-md hover:bg-destructive/10"
-      >
+      <button onClick={onDelete} className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground/30 hover:text-destructive transition-all rounded-md hover:bg-destructive/10">
         <Trash2 className="w-3.5 h-3.5" />
       </button>
     </div>
@@ -682,6 +709,15 @@ function OpenQuestionsSection({
     onUpdate();
   }
 
+  async function saveQuestion(id: string, text: string) {
+    await fetch(`/api/questions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    onUpdate();
+  }
+
   if (questions.length === 0 && !adding) return null;
 
   return (
@@ -712,6 +748,7 @@ function OpenQuestionsSection({
             question={q}
             onToggle={() => toggleResolve(q)}
             onDelete={() => deleteQuestion(q.id)}
+            onSave={(text) => saveQuestion(q.id, text)}
           />
         ))}
         {resolved.length > 0 && (
@@ -725,6 +762,7 @@ function OpenQuestionsSection({
                 question={q}
                 onToggle={() => toggleResolve(q)}
                 onDelete={() => deleteQuestion(q.id)}
+                onSave={(text) => saveQuestion(q.id, text)}
               />
             ))}
           </div>
@@ -766,11 +804,37 @@ function QuestionRow({
   question,
   onToggle,
   onDelete,
+  onSave,
 }: {
   question: OpenQuestion;
   onToggle: () => void;
   onDelete: () => void;
+  onSave: (text: string) => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(question.text);
+
+  function save() {
+    if (editText.trim()) onSave(editText.trim());
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="flex gap-2 px-2 py-2 bg-muted/30 rounded-lg border border-border">
+        <input
+          autoFocus
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
+          className="flex-1 bg-transparent text-sm focus:outline-none"
+        />
+        <button onClick={save} className="px-2 py-1 bg-sky-500 hover:bg-sky-400 text-white text-xs rounded-md">Save</button>
+        <button onClick={() => setEditing(false)} className="text-xs text-muted-foreground px-1">Cancel</button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-start gap-2.5 px-2 py-2 rounded-lg hover:bg-accent/50 group transition-colors">
       <button onClick={onToggle} className="mt-0.5 shrink-0">
@@ -781,10 +845,8 @@ function QuestionRow({
         )}
       </button>
       <p
-        className={cn(
-          "text-sm flex-1",
-          question.resolved && "line-through text-muted-foreground/50"
-        )}
+        className={cn("text-sm flex-1 cursor-pointer", question.resolved && "line-through text-muted-foreground/50")}
+        onClick={() => setEditing(true)}
       >
         {question.text}
       </p>
