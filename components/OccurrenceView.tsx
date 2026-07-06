@@ -890,6 +890,15 @@ function DecisionsSection({
     onUpdate();
   }
 
+  async function saveDecision(id: string, text: string) {
+    await fetch(`/api/decisions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    onUpdate();
+  }
+
   return (
     <section>
       <div className="flex items-center justify-between mb-2.5">
@@ -916,19 +925,12 @@ function DecisionsSection({
           <p className="text-xs text-muted-foreground/40 py-1">No decisions recorded</p>
         )}
         {decisions.map((d) => (
-          <div
+          <DecisionRow
             key={d.id}
-            className="flex items-start gap-2.5 px-2 py-2 rounded-lg hover:bg-accent/50 group transition-colors"
-          >
-            <Lightbulb className="w-4 h-4 text-amber-400/50 mt-0.5 shrink-0" />
-            <p className="text-sm flex-1">{d.text}</p>
-            <button
-              onClick={() => deleteDecision(d.id)}
-              className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground/30 hover:text-destructive transition-all rounded-md hover:bg-destructive/10"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
+            decision={d}
+            onDelete={() => deleteDecision(d.id)}
+            onSave={(text) => saveDecision(d.id, text)}
+          />
         ))}
         {adding && (
           <div className="flex gap-2 mt-2 p-3 bg-muted/30 rounded-lg border border-border">
@@ -960,5 +962,41 @@ function DecisionsSection({
         )}
       </div>
     </section>
+  );
+}
+
+function DecisionRow({ decision, onDelete, onSave }: { decision: Decision; onDelete: () => void; onSave: (text: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(decision.text);
+
+  function save() {
+    if (editText.trim()) onSave(editText.trim());
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="flex gap-2 px-2 py-2 bg-muted/30 rounded-lg border border-border">
+        <input
+          autoFocus
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
+          className="flex-1 bg-transparent text-sm focus:outline-none"
+        />
+        <button onClick={save} className="px-2 py-1 bg-amber-500 hover:bg-amber-400 text-white text-xs rounded-md">Save</button>
+        <button onClick={() => setEditing(false)} className="text-xs text-muted-foreground px-1">Cancel</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-start gap-2.5 px-2 py-2 rounded-lg hover:bg-accent/50 group transition-colors">
+      <Lightbulb className="w-4 h-4 text-amber-400/50 mt-0.5 shrink-0" />
+      <p className="text-sm flex-1 cursor-pointer" onClick={() => setEditing(true)}>{decision.text}</p>
+      <button onClick={onDelete} className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground/30 hover:text-destructive transition-all rounded-md hover:bg-destructive/10">
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
+    </div>
   );
 }
