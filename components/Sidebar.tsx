@@ -174,7 +174,7 @@ function MeetingLink({ meeting, pathname }: { meeting: RecurringMeeting; pathnam
           )}
 
           {menuOpen && (
-            <div className="absolute left-0 top-6 w-40 bg-card border border-border rounded-lg shadow-lg py-1 z-50 animate-fade-in">
+            <div className="absolute right-0 top-6 w-40 bg-card border border-border rounded-lg shadow-lg py-1 z-50 animate-fade-in">
               <button
                 onClick={() => { setMenuOpen(false); togglePin(); }}
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent transition-colors text-left text-foreground"
