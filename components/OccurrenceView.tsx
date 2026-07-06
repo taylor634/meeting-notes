@@ -98,9 +98,33 @@ export function OccurrenceView({ occurrence, meeting, onUpdate }: OccurrenceView
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className={cn("text-xs font-medium px-2 py-0.5 rounded-md", colors.bg, colors.text)}>
-              {formatDate(occurrence.date)}
-            </span>
+            {editingDate ? (
+              <input
+                type="date"
+                defaultValue={occurrence.date.slice(0, 10)}
+                autoFocus
+                onBlur={async (e) => {
+                  setEditingDate(false);
+                  if (!e.target.value) return;
+                  await fetch(`/api/occurrences/${occurrence.id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ date: new Date(e.target.value + "T12:00:00").toISOString() }),
+                  });
+                  onUpdate();
+                }}
+                onKeyDown={(e) => { if (e.key === "Escape") setEditingDate(false); }}
+                className="text-xs font-medium px-2 py-0.5 rounded-md border border-border bg-background"
+              />
+            ) : (
+              <button
+                onClick={() => setEditingDate(true)}
+                className={cn("text-xs font-medium px-2 py-0.5 rounded-md hover:opacity-70 transition-opacity", colors.bg, colors.text)}
+                title="Click to edit date"
+              >
+                {formatDate(occurrence.date)}
+              </button>
+            )}
             {occurrence.status === "completed" && (
               <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400">
                 Completed
