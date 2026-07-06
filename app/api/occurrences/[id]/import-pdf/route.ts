@@ -17,18 +17,26 @@ function extractSection(text: string, heading: string, nextHeadings: string[]): 
   return match ? match[1].trim() : "";
 }
 
+function joinWrappedLines(block: string): string[] {
+  const raw = block.split("\n").map((l) => l.trim()).filter((l) => l.length > 0 && !/^\d+$/.test(l));
+  const joined: string[] = [];
+  for (const line of raw) {
+    const isBullet = /^[•\-*]/.test(line) || /^[A-Za-z]+:\s/.test(line);
+    if (isBullet || joined.length === 0) {
+      joined.push(line.replace(/^[•\-*]\s*/, ""));
+    } else {
+      joined[joined.length - 1] += " " + line;
+    }
+  }
+  return joined;
+}
+
 function parseBullets(block: string): string[] {
-  return block
-    .split("\n")
-    .map((l) => l.replace(/^[•\-*]\s*/, "").trim())
-    .filter((l) => l.length > 0 && !/^\d+$/.test(l));
+  return joinWrappedLines(block);
 }
 
 function parseActionItems(block: string): { text: string; owner: string | null }[] {
-  const lines = block
-    .split("\n")
-    .map((l) => l.replace(/^[•\-*]\s*/, "").trim())
-    .filter((l) => l.length > 0 && !/^\d+$/.test(l));
+  const lines = joinWrappedLines(block);
 
   return lines.map((line) => {
     const ownerMatch = line.match(/^([A-Za-z]+):\s+(.+)/);
