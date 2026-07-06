@@ -101,7 +101,7 @@ export function OccurrenceView({ occurrence, meeting, onUpdate }: OccurrenceView
             {editingDate ? (
               <input
                 type="date"
-                defaultValue={occurrence.date.slice(0, 10)}
+                defaultValue={new Date(occurrence.date).toLocaleDateString("en-CA")}
                 autoFocus
                 onBlur={async (e) => {
                   setEditingDate(false);
@@ -109,7 +109,7 @@ export function OccurrenceView({ occurrence, meeting, onUpdate }: OccurrenceView
                   await fetch(`/api/occurrences/${occurrence.id}`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ date: new Date(e.target.value + "T12:00:00").toISOString() }),
+                    body: JSON.stringify({ date: e.target.value + "T12:00:00.000Z" }),
                   });
                   onUpdate();
                 }}
