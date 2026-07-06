@@ -17,6 +17,7 @@ import {
   Calendar,
   User,
   Video,
+  Upload,
 } from "lucide-react";
 import { cn, formatDate, parseSummary, getColor } from "@/lib/utils";
 import type { MeetingOccurrence, RecurringMeeting, ActionItem, OpenQuestion, Decision } from "@/lib/types";
@@ -115,6 +116,7 @@ export function OccurrenceView({ occurrence, meeting, onUpdate }: OccurrenceView
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <ImportPdfButton occurrenceId={occurrence.id} onImported={onUpdate} />
           {meeting.zoomMeetingId && (
             <ImportZoomButton
               occurrenceId={occurrence.id}
@@ -265,6 +267,43 @@ function ImportZoomButton({
       <Video className={cn("w-4 h-4", loading && "animate-pulse")} />
       {loading ? "Importing…" : "Import from Zoom"}
     </button>
+  );
+}
+
+function ImportPdfButton({ occurrenceId, onImported }: { occurrenceId: string; onImported: () => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLoading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch(`/api/occurrences/${occurrenceId}/import-pdf`, { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error ?? "Failed to import PDF"); return; }
+      toast.success(`Imported — ${data.imported.actionItems} action items, ${data.imported.decisions} decisions, ${data.imported.openQuestions} questions`);
+      onImported();
+    } finally {
+      setLoading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  return (
+    <>
+      <input ref={inputRef} type="file" accept=".pdf" className="hidden" onChange={handleFile} />
+      <button
+        onClick={() => inputRef.current?.click()}
+        disabled={loading}
+        className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-violet-500/30 bg-violet-500/5 hover:bg-violet-500/10 text-violet-500 rounded-lg transition-colors disabled:opacity-50"
+      >
+        <Upload className={cn("w-4 h-4", loading && "animate-pulse")} />
+        {loading ? "Importing…" : "Import PDF"}
+      </button>
+    </>
   );
 }
 
